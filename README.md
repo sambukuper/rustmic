@@ -4,6 +4,26 @@ WO Mic client rewritten in Rust. Talks to the WO Mic app on an Android phone
 and plays its microphone stream on the computer, without the original
 Windows client.
 
+Install (Windows, PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/sambukuper/rustmic/main/scripts/install.ps1 | iex
+```
+
+Install (Linux):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sambukuper/rustmic/main/scripts/install.sh | sh
+```
+
+Both commands fetch the latest release, unpack the client into a user
+directory and add it to the PATH. The Linux client can also expose the
+phone's microphone as a system-wide virtual microphone:
+
+```sh
+rustmic virtual-mic --transport wifi --host 192.168.1.178
+```
+
 The protocol was recovered from the shipped client binary; every constant
 and message layout is documented with the disassembly evidence in
 [docs/ANALYSIS.md](docs/ANALYSIS.md).

@@ -69,6 +69,33 @@ impl SampleSink for StdoutSink {
     }
 }
 
+/// Writes raw little endian 16 bit mono samples into a file or pipe,
+/// used by the Linux virtual microphone.
+pub struct FileSink {
+    inner: std::fs::File,
+    buffer: Vec<u8>,
+}
+
+impl FileSink {
+    pub fn new(inner: std::fs::File) -> FileSink {
+        FileSink { inner, buffer: Vec::with_capacity(FRAME_SAMPLES * 2) }
+    }
+}
+
+impl SampleSink for FileSink {
+    fn write(&mut self, samples: &[i16]) -> Result<()> {
+        self.buffer.clear();
+        for sample in samples {
+            self.buffer.extend_from_slice(&sample.to_le_bytes());
+        }
+        self.inner.write_all(&self.buffer).map_err(Error::Io)
+    }
+
+    fn name(&self) -> &'static str {
+        "file"
+    }
+}
+
 /// Plays through a real audio output device via cpal.
 ///
 /// The media thread pushes 20 ms frames into a bounded channel; the cpal

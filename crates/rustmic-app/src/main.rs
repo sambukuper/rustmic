@@ -26,7 +26,11 @@ use sink::{NullSink, SampleSink, SpeakerSink, StdoutSink};
 /// Connects to a WO Mic server and plays the microphone stream of the
 /// phone on this computer.
 #[derive(Debug, Parser)]
-#[command(name = "rustmic", version, about)]
+#[command(
+    name = "rustmic",
+    version,
+    about = "WO Mic client: connect (default) or virtual-mic (Linux virtual microphone)"
+)]
 struct Args {
     /// Transport: wifi, wifi-direct, usb or bluetooth.
     #[arg(long)]
@@ -92,6 +96,12 @@ struct Args {
     /// List the paired Bluetooth devices and exit.
     #[arg(long)]
     list_bt_devices: bool,
+
+    /// Client mode: connect (default) or virtual-mic (Linux: pipe the
+    /// stream into a PulseAudio/PipeWire source instead of an output
+    /// device).
+    #[arg(value_name = "MODE", default_value = "connect", hide = true)]
+    mode: String,
 }
 
 fn main() -> ExitCode {
@@ -116,6 +126,14 @@ fn main() -> ExitCode {
                 ExitCode::from(error_code(&error))
             }
         };
+    }
+
+    if !matches!(args.mode.as_str(), "connect" | "virtual-mic") {
+        eprintln!(
+            "unknown mode '{}' (expected connect or virtual-mic)",
+            args.mode
+        );
+        return ExitCode::from(2);
     }
 
     let settings = match &args.settings {
@@ -165,6 +183,30 @@ fn main() -> ExitCode {
         );
     }
 
+    let stats = Arc::new(Statistics::new());
+
+    if args.mode == "virtual-mic" {
+        #[cfg(target_os = "linux")]
+        {
+            let outcome = virtual_mic::run(&plan, &options, &stats);
+            return match outcome {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("{error}");
+                    ExitCode::from(error_code(&error))
+                }
+            };
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = &plan;
+            let _ = &options;
+            let _ = &stats;
+            eprintln!("virtual-mic is only available on Linux");
+            return ExitCode::from(9);
+        }
+    }
+
     let mut sink: Box<dyn SampleSink> = if args.stdout {
         Box::new(StdoutSink::new())
     } else if args.no_play {
@@ -183,7 +225,6 @@ fn main() -> ExitCode {
     ctrlc::set_handler(move || stop.store(true, Ordering::Relaxed))
         .expect("could not install the Ctrl+C handler");
 
-    let stats = Arc::new(Statistics::new());
     let stats_stop = options.stop.clone();
     let thread_stats = stats.clone();
     let stats_thread = std::thread::spawn(move || {
