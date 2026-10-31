@@ -5,7 +5,8 @@
 //! the Connect/Ports/Buffer/Statistics/About dialog templates). The
 //! dialogs are embedded in the client area of the main window, and the
 //! connection runs on a worker thread through the same pipeline the
-//! command line client uses.
+//! command line client uses. The Fix menu offers environment repairs for
+//! connection drops.
 
 // A windowed application: no console window on release builds.
 #![cfg_attr(all(target_os = "windows", not(debug_assertions)), windows_subsystem = "windows")]
@@ -19,6 +20,10 @@ use std::time::Duration;
 use eframe::egui;
 
 use rustmic_app::session::{self, ConnectionPlan, PipelineOptions};
+
+mod fixes;
+
+use fixes::Repair;
 use rustmic_app::sink::{NullSink, SampleSink, SpeakerSink};
 use rustmic_core::settings::{Settings, TransportType};
 use rustmic_core::stats::Statistics;
@@ -28,7 +33,8 @@ fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([500.0, 357.0])
-            .with_min_inner_size([420.0, 300.0]),
+            .with_min_inner_size([420.0, 300.0])
+            .with_icon(window_icon()),
         ..Default::default()
     };
     eframe::run_native(
@@ -55,6 +61,7 @@ enum Dialog {
     Buffer,
     Statistics,
     About,
+    Fix,
 }
 
 /// The tips texts of the original client, string table 7 of
@@ -99,6 +106,8 @@ struct RustMicApp {
 
     // dialog state
     dialog: Option<Dialog>,
+    fix_output: String,
+    fix_running: Option<Repair>,
     connect_transport: TransportType,
     connect_host: String,
     connect_soft_ap: String,
@@ -130,6 +139,8 @@ impl RustMicApp {
             result_rx: None,
             worker: None,
             dialog: None,
+            fix_output: String::new(),
+            fix_running: None,
             connect_transport: settings.transport_type,
             connect_host: settings.wifi_server_addr.clone(),
             connect_soft_ap: settings.soft_ap_addr.clone(),
@@ -150,6 +161,7 @@ impl RustMicApp {
                 "buffer" => app.dialog = Some(Dialog::Buffer),
                 "stats" => app.dialog = Some(Dialog::Statistics),
                 "about" => app.dialog = Some(Dialog::About),
+                "fix" => app.dialog = Some(Dialog::Fix),
                 _ => {}
             }
         }
@@ -217,6 +229,8 @@ impl RustMicApp {
         let stats = self.stats.clone();
         let play = self.play_in_speaker;
         self.worker = Some(std::thread::spawn(move || {
+            // Holds the system awake for the whole stream; resets on drop.
+            let _keep_awake = fixes::KeepAwake::new();
             let mut sink: Box<dyn SampleSink> = if play {
                 SpeakerSink::open(None)
                     .map(|s| Box::new(s) as Box<dyn SampleSink>)
@@ -260,6 +274,30 @@ impl RustMicApp {
             self.disconnecting = false;
         } else if self.stats.packets_received.load(Ordering::Relaxed) > 0 {
             self.state = State::Connected;
+        }
+        self.drain_fix_results();
+    }
+
+    /// Collects finished repair runs into the output area.
+    fn drain_fix_results(&mut self) {
+        let drained: Vec<_> = {
+            let mut queue = FIX_RESULTS.lock().expect("fix results mutex");
+            queue.drain(..).collect()
+        };
+        for (repair, result) in drained {
+            self.fix_running = None;
+            let line = match result {
+                Ok(text) => format!("{}: ok
+{}", repair.label(), text),
+                Err(text) => format!("{}: FAILED
+{}", repair.label(), text),
+            };
+            if !self.fix_output.is_empty() {
+                self.fix_output.push_str("
+
+");
+            }
+            self.fix_output.push_str(&line);
         }
     }
 
@@ -350,6 +388,13 @@ impl eframe::App for RustMicApp {
                         self.dialog = Some(Dialog::About);
                     }
                 });
+                ui.menu_button("Fix", |ui| {
+                    if ui.button("Connection problems...").clicked() {
+                        ui.close_menu();
+                        self.fix_output.clear();
+                        self.dialog = Some(Dialog::Fix);
+                    }
+                });
             });
         });
 
@@ -401,6 +446,13 @@ impl eframe::App for RustMicApp {
             }
             Some(Dialog::About) => {
                 let close = dialog_frame(ui, "About", |ui| self.about_dialog(ui));
+                if close {
+                    self.dialog = None;
+                }
+            }
+            Some(Dialog::Fix) => {
+                let close =
+                    dialog_frame(ui, "Fix connection problems", |ui| self.fix_dialog(ui));
                 if close {
                     self.dialog = None;
                 }
@@ -655,6 +707,72 @@ fn dialog_buttons(ui: &mut egui::Ui) -> Option<bool> {
     clicked
 }
 
+impl RustMicApp {
+    /// The Fix dialog: one button per environment repair, an output area
+    /// for what the repairs printed, and a note about the automatic ones.
+    fn fix_dialog(&mut self, ui: &mut egui::Ui) {
+        ui.add_space(6.0);
+        ui.label(
+            "Keepalive probes and the sleep inhibitor are always active while connected. \
+             The buttons below repair the environment; elevated ones ask through UAC or pkexec.",
+        );
+        ui.add_space(6.0);
+
+        let repairs = [
+            Repair::Firewall,
+            Repair::UsbSuspend,
+            Repair::AdapterPower,
+            Repair::WifiPowerSave,
+            Repair::UsbAutosuspend,
+        ];
+        ui.horizontal_wrapped(|ui| {
+            for repair in repairs {
+                if !repair.available() {
+                    continue;
+                }
+                let running = self.fix_running == Some(repair);
+                let label = if running {
+                    format!("{} (confirm the prompt)", repair.label())
+                } else {
+                    repair.label().to_string()
+                };
+                if ui.add_enabled(!running, egui::Button::new(label)).clicked() {
+                    self.fix_output.clear();
+                    self.fix_running = Some(repair);
+                    std::thread::spawn(move || {
+                        let result = fixes::run(repair);
+                        FIX_RESULTS
+                            .lock()
+                            .expect("fix results mutex")
+                            .push((repair, result));
+                    });
+                }
+            }
+        });
+
+        if !self.fix_output.is_empty() {
+            ui.add_space(8.0);
+            egui::ScrollArea::vertical().max_height(140.0).show(ui, |ui| {
+                ui.label(egui::RichText::new(&self.fix_output).monospace().small());
+            });
+        }
+        ui.add_space(8.0);
+        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+            if ui
+                .add(egui::Button::new("Close").min_size([80.0, 0.0].into()))
+                .clicked()
+            {
+                self.dialog = None;
+            }
+        });
+    }
+}
+
+/// Finished repair runs waiting for the UI thread, shared with the
+/// spawned worker threads.
+static FIX_RESULTS: std::sync::Mutex<Vec<(Repair, Result<String, String>)>> =
+    std::sync::Mutex::new(Vec::new());
+
 fn transport_label(transport: TransportType) -> &'static str {
     match transport {
         TransportType::Bluetooth => "Bluetooth",
@@ -662,6 +780,17 @@ fn transport_label(transport: TransportType) -> &'static str {
         TransportType::Wifi => "Wi-Fi",
         TransportType::WifiDirect => "Wi-Fi Direct",
     }
+}
+
+/// The logo as the window icon, decoded from a prebuilt 32x32 RGBA blob
+/// so the binary needs no image decoder.
+fn window_icon() -> Arc<egui::IconData> {
+    const RGBA: &[u8] = include_bytes!("../../../assets/rustmic-32.rgba");
+    Arc::new(egui::IconData {
+        width: 32,
+        height: 32,
+        rgba: RGBA.to_vec(),
+    })
 }
 
 fn exe_directory() -> Option<PathBuf> {

@@ -2086,6 +2086,7 @@ dependencies = [
  "rustmic-app",
  "rustmic-core",
  "rustmic-transport",
+ "windows-sys 0.61.2",
  "winresource",
 ]
 
