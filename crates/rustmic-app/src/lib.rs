@@ -4,3 +4,6 @@
 pub mod codec;
 pub mod session;
 pub mod sink;
+
+#[cfg(target_os = "linux")]
+pub mod virtual_mic;
