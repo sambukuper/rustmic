@@ -138,6 +138,11 @@ impl WomicApp {
             // The original client starts a connection on the same flag.
             app.start_connection();
         }
+        if std::env::var_os("WOMIC_TEST_OPEN_CONNECT").is_some() {
+            // Test hook: open the Connect dialog right away so a scripted
+            // screenshot can verify the layout.
+            app.open_connect_dialog();
+        }
         app
     }
 
@@ -426,99 +431,112 @@ fn dialog_frame(
 }
 
 impl WomicApp {
-    /// The Connect dialog: transport radios on the left, per transport
-    /// details and the original tips on the right, OK/Cancel below.
+    /// The Connect dialog: transport radios stacked in the left group, per
+    /// transport details and the original tips in the right group, OK and
+    /// Cancel centered at the bottom, like the original dialog.
     fn connect_dialog(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            egui::Frame::group(ui.style()).show(ui, |ui| {
-                ui.set_min_width(120.0);
-                ui.set_min_height(ui.available_height() - 34.0);
-                ui.strong("Transport type");
-                for candidate in [
-                    TransportType::Bluetooth,
-                    TransportType::Usb,
-                    TransportType::Wifi,
-                    TransportType::WifiDirect,
-                ] {
-                    if ui
-                        .radio(
-                            &self.connect_transport == &candidate,
-                            transport_label(candidate),
-                        )
-                        .clicked()
-                    {
-                        self.connect_transport = candidate;
-                        if candidate == TransportType::Bluetooth && self.bt_devices.is_empty() {
-                            self.load_bt_devices();
-                        }
-                    }
-                }
-            });
-
-            egui::Frame::group(ui.style()).show(ui, |ui| {
-                ui.set_min_width(ui.available_width());
-                ui.set_min_height(ui.available_height() - 34.0);
-                ui.strong("Details");
-                match self.connect_transport {
-                    TransportType::Bluetooth => {
-                        ui.label("Target device:");
-                        let selected = self
-                            .bt_devices
-                            .iter()
-                            .find(|d| d.address == self.connect_bt_address)
-                            .map(|d| format!("{} ({})", d.name, d.address))
-                            .unwrap_or_else(|| "Select a paired phone...".to_string());
-                        egui::ComboBox::from_id_salt("bt_device")
-                            .selected_text(selected)
-                            .width(240.0)
-                            .show_ui(ui, |ui| {
-                                for device in &self.bt_devices {
-                                    let text = format!("{} ({})", device.name, device.address);
-                                    ui.selectable_value(
-                                        &mut self.connect_bt_address,
-                                        device.address.clone(),
-                                        text,
-                                    );
-                                }
-                            });
-                        if self.bt_devices.is_empty() {
-                            ui.label("No paired devices found.");
-                        }
-                    }
-                    TransportType::Wifi => {
-                        ui.label("Server IP address:");
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.connect_host).desired_width(160.0),
-                        );
-                    }
-                    TransportType::WifiDirect => {
-                        ui.label("Soft AP address:");
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.connect_soft_ap)
-                                .desired_width(160.0),
-                        );
-                    }
-                    TransportType::Usb => {}
-                }
-                ui.add_space(10.0);
-                ui.small(tips(self.connect_transport));
-            });
-        });
-
-        ui.add_space(8.0);
-        ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+        ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                if ui.add(egui::Button::new("OK").min_size([80.0, 0.0].into())).clicked() {
+                ui.vertical(|ui| {
+                    egui::Frame::group(ui.style()).show(ui, |ui| {
+                        ui.set_min_width(130.0);
+                        ui.set_min_height(150.0);
+                        ui.strong("Transport type");
+                        ui.add_space(6.0);
+                        for candidate in [
+                            TransportType::Bluetooth,
+                            TransportType::Usb,
+                            TransportType::Wifi,
+                            TransportType::WifiDirect,
+                        ] {
+                            if ui
+                                .radio(
+                                    &self.connect_transport == &candidate,
+                                    transport_label(candidate),
+                                )
+                                .clicked()
+                            {
+                                self.connect_transport = candidate;
+                                if candidate == TransportType::Bluetooth
+                                    && self.bt_devices.is_empty()
+                                {
+                                    self.load_bt_devices();
+                                }
+                            }
+                        }
+                    });
+                });
+
+                ui.vertical(|ui| {
+                    egui::Frame::group(ui.style()).show(ui, |ui| {
+                        ui.set_min_width(ui.available_width() - 16.0);
+                        ui.set_min_height(150.0);
+                        ui.strong("Details");
+                        ui.add_space(6.0);
+                        match self.connect_transport {
+                            TransportType::Bluetooth => {
+                                ui.label("Target device:");
+                                let selected = self
+                                    .bt_devices
+                                    .iter()
+                                    .find(|d| d.address == self.connect_bt_address)
+                                    .map(|d| format!("{} ({})", d.name, d.address))
+                                    .unwrap_or_else(|| "Select a paired phone...".to_string());
+                                egui::ComboBox::from_id_salt("bt_device")
+                                    .selected_text(selected)
+                                    .width(240.0)
+                                    .show_ui(ui, |ui| {
+                                        for device in &self.bt_devices {
+                                            let text =
+                                                format!("{} ({})", device.name, device.address);
+                                            ui.selectable_value(
+                                                &mut self.connect_bt_address,
+                                                device.address.clone(),
+                                                text,
+                                            );
+                                        }
+                                    });
+                                if self.bt_devices.is_empty() {
+                                    ui.label("No paired devices found.");
+                                }
+                            }
+                            TransportType::Wifi => {
+                                ui.label("Server IP address:");
+                                ui.add(egui::TextEdit::singleline(&mut self.connect_host)
+                                    .desired_width(160.0));
+                            }
+                            TransportType::WifiDirect => {
+                                ui.label("Soft AP address:");
+                                ui.add(egui::TextEdit::singleline(&mut self.connect_soft_ap)
+                                    .desired_width(160.0));
+                            }
+                            TransportType::Usb => {}
+                        }
+                        ui.add_space(12.0);
+                        ui.label(egui::RichText::new("Tips:").small().strong());
+                        ui.add(
+                            egui::Label::new(
+                                egui::RichText::new(tips(self.connect_transport)).small(),
+                            )
+                            .wrap(),
+                        );
+                    });
+                });
+            });
+
+            // Pin the buttons to the bottom of the client area.
+            let left = ui.available_height() - 46.0;
+            if left > 0.0 {
+                ui.add_space(left);
+            }
+            match dialog_buttons(ui) {
+                Some(true) => {
                     self.dialog = None;
                     self.start_connection();
                 }
-                if ui
-                    .add(egui::Button::new("Cancel").min_size([80.0, 0.0].into()))
-                    .clicked()
-                {
-                    self.dialog = None;
-                }
-            });
+                Some(false) => self.dialog = None,
+                None => {}
+            }
         });
     }
 
