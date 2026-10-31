@@ -30,6 +30,16 @@ toolchain must be available. `.cargo/config.toml` already sets
 
 ## Usage
 
+Two front ends, same pipeline:
+
+* `womic-gui` opens a window in the spirit of the original client: a
+  Connection menu (Connect / Disconnect / Exit), connection fields, an About
+  dialog and a status bar that shows the state on the left and the transport
+  on the right. It reads and writes the same `settings.dat`, and its
+  `Connect when the client starts` option matches the original
+  `autoConnect` flag.
+* `womic` is the command line client described below.
+
 Start the WO Mic app on the phone, pick a transport and connect:
 
 ```sh
@@ -81,6 +91,7 @@ like the original client; only Wi-Fi uses a second channel.
 crates/womic-core        protocol, framing, settings, jitter buffer, stats
 crates/womic-transport   TCP, UDP, adb and Bluetooth (RFCOMM) transports
 crates/womic-app         the womic binary: CLI, Opus decoder, audio output
+crates/womic-gui         the womic-gui binary: desktop window (egui)
 docs/ANALYSIS.md         disassembly evidence for every protocol detail
 ```
 

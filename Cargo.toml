@@ -4,6 +4,7 @@ members = [
     "crates/womic-core",
     "crates/womic-transport",
     "crates/womic-app",
+    "crates/womic-gui",
 ]
 
 [workspace.package]
@@ -16,6 +17,7 @@ repository = "https://github.com/sambukuper/rust-mic"
 [workspace.dependencies]
 womic-core = { path = "crates/womic-core" }
 womic-transport = { path = "crates/womic-transport" }
+womic-app = { path = "crates/womic-app" }
 
 [profile.release]
 opt-level = 3
