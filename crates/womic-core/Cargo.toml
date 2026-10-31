@@ -1,0 +1,9 @@
+[package]
+name = "womic-core"
+description = "Protocol, framing, settings and jitter-buffer logic of the WO Mic client"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]

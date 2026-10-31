@@ -1,0 +1,4 @@
+[env]
+# The vendored libopus in audiopus_sys declares an old CMake minimum; CMake
+# 4.x needs this to configure it anyway.
+CMAKE_POLICY_VERSION_MINIMUM = "3.5"

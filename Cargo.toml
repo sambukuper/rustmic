@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/womic-core",
+    "crates/womic-transport",
+    "crates/womic-app",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+license = "GPL-3.0-only"
+repository = "https://github.com/sambukuper/rust-mic"
+
+[workspace.dependencies]
+womic-core = { path = "crates/womic-core" }
+womic-transport = { path = "crates/womic-transport" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"

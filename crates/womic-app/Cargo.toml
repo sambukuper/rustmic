@@ -1,0 +1,19 @@
+[package]
+name = "womic-app"
+description = "Command line WO Mic client: control handshake, media pipeline and audio output"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "womic"
+path = "src/main.rs"
+
+[dependencies]
+womic-core = { workspace = true }
+womic-transport = { workspace = true }
+clap = { version = "4", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "derive"] }
+opus = "0.3"
+cpal = "0.15"
+ctrlc = "3"
