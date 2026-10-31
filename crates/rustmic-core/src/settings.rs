@@ -138,6 +138,9 @@ pub struct Settings {
     pub window: WindowState,
     /// Bluetooth address of the server, `0.0.0.0.0.0` when unset.
     pub bt_address: String,
+    /// Audio output device substring for this client, empty for the
+    /// default device. An extension the original client ignores.
+    pub audio_device: String,
 }
 
 impl Default for Settings {
@@ -153,6 +156,7 @@ impl Default for Settings {
             auto_connect: false,
             window: WindowState::default(),
             bt_address: "0.0.0.0.0.0".to_string(),
+            audio_device: String::new(),
         }
     }
 }
@@ -198,6 +202,7 @@ impl Settings {
                 "autoConnect" => settings.auto_connect = value != "0",
                 "window" => settings.window = parse_window(value),
                 "btAddress" => settings.bt_address = value.to_string(),
+                "audioDevice" => settings.audio_device = value.to_string(),
                 _ => {}
             }
         }

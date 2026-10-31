@@ -24,7 +24,7 @@ use rustmic_app::session::{self, ConnectionPlan, PipelineOptions};
 mod fixes;
 
 use fixes::Repair;
-use rustmic_app::sink::{NullSink, SampleSink, SpeakerSink};
+use rustmic_app::sink::{output_device_names, NullSink, SampleSink, SpeakerSink};
 use rustmic_core::settings::{Settings, TransportType};
 use rustmic_core::stats::Statistics;
 use rustmic_transport::bt::BtDeviceInfo;
@@ -62,6 +62,7 @@ enum Dialog {
     Statistics,
     About,
     Fix,
+    Device,
 }
 
 /// The tips texts of the original client, string table 7 of
@@ -93,6 +94,8 @@ struct RustMicApp {
     bt_address: String,
     buffer_size: u32,
     play_in_speaker: bool,
+    audio_device: String,
+    device_list: Vec<String>,
     reconnect: bool,
     auto_connect: bool,
 
@@ -130,6 +133,8 @@ impl RustMicApp {
             bt_address: settings.bt_address.clone(),
             buffer_size: settings.buffer_size.min(10).max(1),
             play_in_speaker: settings.play_locally,
+            audio_device: settings.audio_device.clone(),
+            device_list: Vec::new(),
             reconnect: settings.auto_connect,
             auto_connect: settings.auto_connect,
             state: State::Disconnected,
@@ -162,6 +167,10 @@ impl RustMicApp {
                 "stats" => app.dialog = Some(Dialog::Statistics),
                 "about" => app.dialog = Some(Dialog::About),
                 "fix" => app.dialog = Some(Dialog::Fix),
+                "device" => {
+                    app.device_list = rustmic_app::sink::output_device_names();
+                    app.dialog = Some(Dialog::Device);
+                }
                 _ => {}
             }
         }
@@ -180,6 +189,7 @@ impl RustMicApp {
             auto_connect: self.auto_connect,
             window: rustmic_core::settings::WindowState::default(),
             bt_address: self.bt_address.clone(),
+            audio_device: self.audio_device.clone(),
         }
     }
 
@@ -228,11 +238,13 @@ impl RustMicApp {
         let (tx, rx) = mpsc::channel();
         let stats = self.stats.clone();
         let play = self.play_in_speaker;
+        let app_audio_device = self.audio_device.clone();
         self.worker = Some(std::thread::spawn(move || {
             // Holds the system awake for the whole stream; resets on drop.
             let _keep_awake = fixes::KeepAwake::new();
             let mut sink: Box<dyn SampleSink> = if play {
-                SpeakerSink::open(None)
+                let device = app_audio_device.clone();
+                SpeakerSink::open(if device.is_empty() { None } else { Some(&device) })
                     .map(|s| Box::new(s) as Box<dyn SampleSink>)
                     .unwrap_or_else(|_| Box::new(NullSink))
             } else {
@@ -377,6 +389,11 @@ impl eframe::App for RustMicApp {
                         ui.close_menu();
                         self.dialog = Some(Dialog::Buffer);
                     }
+                    if ui.button("Audio output device...").clicked() {
+                        ui.close_menu();
+                        self.device_list = output_device_names();
+                        self.dialog = Some(Dialog::Device);
+                    }
                 });
                 ui.menu_button("Help", |ui| {
                     if ui.button("Statistics").clicked() {
@@ -453,6 +470,14 @@ impl eframe::App for RustMicApp {
             Some(Dialog::Fix) => {
                 let close =
                     dialog_frame(ui, "Fix connection problems", |ui| self.fix_dialog(ui));
+                if close {
+                    self.dialog = None;
+                }
+            }
+            Some(Dialog::Device) => {
+                let close = dialog_frame(ui, "Audio output device", |ui| {
+                    self.device_dialog(ui)
+                });
                 if close {
                     self.dialog = None;
                 }
@@ -765,6 +790,48 @@ impl RustMicApp {
                 self.dialog = None;
             }
         });
+    }
+}
+
+impl RustMicApp {
+    /// The audio output device dialog: Default plus every device the
+    /// system offers. Playing into the WO Mic Device routes the stream
+    /// into other applications as a microphone.
+    fn device_dialog(&mut self, ui: &mut egui::Ui) {
+        ui.add_space(6.0);
+        ui.label("Output the decoded stream into this device. Empty plays on the default");
+        ui.label("device; the WO Mic Device routes the stream into other applications.");
+        ui.add_space(6.0);
+
+        egui::ScrollArea::vertical().max_height(180.0).show(ui, |ui| {
+            if ui
+                .radio(self.audio_device.is_empty(), "Default device")
+                .clicked()
+            {
+                self.audio_device.clear();
+            }
+            for device in &self.device_list {
+                let selected = self
+                    .audio_device
+                    .to_ascii_lowercase()
+                    .contains(&device.to_ascii_lowercase())
+                    || device.to_ascii_lowercase().contains(&self.audio_device.to_ascii_lowercase())
+                        && !self.audio_device.is_empty();
+                if ui.radio(selected, device).clicked() {
+                    self.audio_device = device.clone();
+                }
+            }
+        });
+
+        ui.add_space(8.0);
+        match dialog_buttons(ui) {
+            Some(true) => {
+                self.save_settings();
+                self.dialog = None;
+            }
+            Some(false) => self.dialog = None,
+            None => {}
+        }
     }
 }
 
