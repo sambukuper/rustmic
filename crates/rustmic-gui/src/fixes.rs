@@ -79,7 +79,7 @@ pub fn windows_script(repair: Repair) -> Option<String> {
 pub fn linux_command(repair: Repair) -> Option<String> {
     match repair {
         Repair::Firewall => {
-            Some("ufw allow 1488/tcp; ufw allow 49152/udp; echo firewall rules added".to_string())
+            Some("ufw allow 8125/tcp; ufw allow 1488/tcp; ufw allow 49152/udp; echo firewall rules added".to_string())
         }
         Repair::WifiPowerSave => Some(
             "for d in /sys/class/net/*; do \

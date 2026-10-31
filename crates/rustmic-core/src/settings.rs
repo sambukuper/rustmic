@@ -26,8 +26,10 @@ use std::path::{Path, PathBuf};
 
 use crate::error::{Error, Result};
 
-/// Default TCP port of the WO Mic control channel.
-pub const DEFAULT_CONTROL_PORT: u16 = 1488;
+/// Default TCP port of the WO Mic control channel. Newer WO Mic server
+/// versions listen on 8125; older ones used 1488, and a `settings.dat`
+/// with an explicit value always wins over this default.
+pub const DEFAULT_CONTROL_PORT: u16 = 8125;
 /// Default UDP port of the WO Mic media channel (Wi-Fi transport).
 pub const DEFAULT_MEDIA_PORT: u16 = 49152;
 /// Default number of packets kept in the jitter buffer.

@@ -102,7 +102,7 @@ Exit codes match the original client's error codes: 6 = connection refused,
 
 | transport | control channel | media channel | notes |
 |-----------|-----------------|---------------|-------|
-| `wifi` | TCP 1488 | UDP 49152 | same LAN |
+| `wifi` | TCP 8125 (1488 on old servers) | UDP 49152 | same LAN |
 | `wifi-direct` | TCP | UDP | phone as hotspot, `softApAddr` |
 | `usb` | TCP via `adb forward` | same connection | one forwarded port |
 | `bluetooth` | RFCOMM | same connection | channels 1..=30 scanned, `--bt-channel` to dial directly |
