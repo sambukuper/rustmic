@@ -28,6 +28,11 @@ The build compiles a static libopus through CMake, so CMake and a C
 toolchain must be available. `.cargo/config.toml` already sets
 `CMAKE_POLICY_VERSION_MINIMUM` for CMake 4.x.
 
+Both front ends run on Windows and Linux; on Linux the GUI works under
+Wayland and X11 (audio goes through ALSA, which PipeWire provides through
+its ALSA interface). Pushing a `v*` tag builds release bundles for both
+platforms through the `release` workflow.
+
 ## Usage
 
 Two front ends, same pipeline:

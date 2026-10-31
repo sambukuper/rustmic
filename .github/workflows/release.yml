@@ -1,0 +1,73 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            bundle: zip
+          - os: ubuntu-latest
+            bundle: tar
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ALSA headers (Linux audio output)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release --workspace
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item target/release/womic.exe dist/
+          Copy-Item target/release/womic-gui.exe dist/
+          Copy-Item README.md, LICENSE, docs/ANALYSIS.md dist/
+          Compress-Archive -Path dist/* -DestinationPath rustmic-${{ github.ref_name }}-windows-x64.zip
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist
+          cp target/release/womic target/release/womic-gui dist/
+          cp README.md LICENSE docs/ANALYSIS.md dist/
+          tar -czf rustmic-${{ github.ref_name }}-linux-x64.tar.gz -C dist .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rustmic-${{ matrix.os }}
+          path: |
+            rustmic-*-windows-x64.zip
+            rustmic-*-linux-x64.tar.gz
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/rustmic-*
+          generate_release_notes: true
