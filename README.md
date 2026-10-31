@@ -11,9 +11,9 @@ and message layout is documented with the disassembly evidence in
 ## Status
 
 Works, tested against a mock server that speaks the recovered protocol end
-to end (TCP control handshake, UDP media, Opus decode). A run against a real
-phone is still the honest check — see [Status](#status) in the analysis
-document for what remains unverified.
+to end (TCP control handshake, UDP media, Opus decode). Nobody has run it
+against a real phone yet; what the analysis did not verify is listed in
+[docs/ANALYSIS.md](docs/ANALYSIS.md#not-verified-against-a-live-server).
 
 ## Build
 
@@ -45,10 +45,10 @@ womic --transport bluetooth --bt-address AA:BB:CC:DD:EE:FF
 ```
 
 Values not given on the command line come from a `settings.dat` file next to
-the executable or in the current directory — same format as the original
-client, so an existing configuration works as is.
+the executable or in the current directory. The format is the same as the
+original client's, so an existing configuration works as is.
 
-Useful options:
+More options:
 
 * `--stdout` writes the decoded PCM (16 bit little endian mono 48 kHz) to
   stdout instead of playing it, for piping into ffmpeg, a virtual audio

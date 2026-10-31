@@ -69,8 +69,8 @@ The transport factory `FUN_004048a0` switches on the transport id from
 `BluetoothMediaStream` and `UsbMediaStream` share one vtable
 (`0x00403490...`): both are thin wrappers around their control stream. The
 media frame reader `FUN_00404730` reads every frame through the controller's
-stream at offset `+0x18`, so **Bluetooth and USB carry control and media
-over one connection**. Only the Wi-Fi transports open a second channel (the
+stream at offset `+0x18`, so Bluetooth and USB carry control and media over
+one connection. Only the Wi-Fi transports open a second channel (the
 `WifiMediaStream` object is 0x410 bytes and holds its own socket from the
 configured media port).
 
@@ -98,7 +98,7 @@ The media payload is Opus. The controller object carries
 `OpusVoiceDecoder::vftable` (the class name survives in the RTTI data); the
 decoder object is created in the media thread `FUN_004042d0` with the sample
 rate and channel count that `FUN_00403ea0` stored at offsets `+0x48` and
-`+0x4c` — 48000 Hz, one channel. A frame is 20 ms (`+0x50 = 0x14`), so one
+`+0x4c`: 48000 Hz, one channel. A frame is 20 ms (`+0x50 = 0x14`), so one
 decoded frame is 960 samples = 1920 bytes of signed 16 bit PCM.
 
 The Opus decoder is statically linked into the DLL (there is no `opus`
@@ -134,11 +134,10 @@ Bluetooth service discovery sample:
    (`FUN_00402210`), `fReturnRemembered = 1`; each device is stored as
    address plus name.
 2. For the chosen device, a `WSALookupServiceBeginW` query
-   (`FUN_00402760`) looks up the service class
-   `{00001101-0000-1000-8000-005F9B34FB}` — the Serial Port Profile — on
-   that device's `SOCKADDR_BTH`, with
-   `LUP_FLUSHCACHE | LUP_RETURN_NAME | LUP_RETURN_TYPE | LUP_RETURN_ADDR |
-   LUP_RETURN_BLOB | LUP_RETURN_COMMENT`.
+   (`FUN_00402760`) looks up the Serial Port Profile service class
+   `{00001101-0000-1000-8000-005F9B34FB}` on that device's `SOCKADDR_BTH`,
+   with `LUP_FLUSHCACHE | LUP_RETURN_NAME | LUP_RETURN_TYPE |
+   LUP_RETURN_ADDR | LUP_RETURN_BLOB | LUP_RETURN_COMMENT`.
 3. For each result, `FUN_00402570` reads SDP attribute 4 (Protocol
    Descriptor List), walks the protocol descriptors until it finds the one
    whose UUID is RFCOMM (3), and `FUN_004024f0` reads the channel byte from
@@ -172,27 +171,18 @@ both implementations.
 
 These are deliberate deviations, not observations:
 
-* **Bluetooth channel discovery.** The original resolves the RFCOMM channel
-  through SDP. This client scans channels 1..=30 instead (or dials an
-  explicit channel with `--bt-channel`); the WO Mic service is the only SPP
-  listener on the phone, so the first successful connect is its channel.
-  The SPP UUID and the socket setup match the original byte for byte.
-* **Audio output.** The original plays through `waveOut` and optionally its
-  virtual audio device driver. This client plays through cpal (WASAPI on
-  Windows, ALSA on Linux) or writes raw PCM to stdout for piping.
-* **Jitter buffer.** The original keeps a play time per packet and drops
-  late ones (`FUN_00404580`). The Rust jitter buffer reorders by sequence
-  number, releases the oldest packet when the buffer is full, skips gaps
-  once play out has started, and exposes the same counters.
-* **Reconnect.** The original retries a broken stream (code -20) from its
-  main loop. This client reconnects after a configurable pause, driven by
-  the same "aborted" error class.
+| area | original client | this rewrite |
+|------|-----------------|--------------|
+| Bluetooth channel discovery | SDP lookup of the SPP service, channel from the protocol descriptor list | scans channels 1..=30, or dials an explicit channel with `--bt-channel`; the WO Mic service is the only SPP listener on the phone, so the first successful connect is its channel |
+| Audio output | `waveOut`, optionally through its own virtual audio device driver | cpal (WASAPI on Windows, ALSA on Linux), or raw PCM to stdout for piping into another program |
+| Jitter buffer | play time per packet, late packets dropped (`FUN_00404580`) | reorders by sequence number, releases the oldest packet when the buffer is full, skips gaps once play out has started, exposes the same counters |
+| Reconnect | retries a broken stream (code -20) from its main loop | reconnects after a configurable pause, driven by the same "aborted" error class |
 
 ## Not verified against a live server
 
-* The exact behaviour of the USB transport end to end (the analysis shows
-  one forwarded port and one shared connection; a real phone test is still
-  the honest check).
+* The exact behaviour of the USB transport end to end. The analysis shows
+  one forwarded port and one shared connection, but only a real phone
+  confirms it.
 * Whether the server ever uses framings other than the announced one, and
   what the second byte of the Wi-Fi frame flag means.
 * Server side reconnect semantics after `g` is sent twice.
