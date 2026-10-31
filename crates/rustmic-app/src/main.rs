@@ -188,7 +188,7 @@ fn main() -> ExitCode {
     if args.mode == "virtual-mic" {
         #[cfg(target_os = "linux")]
         {
-            let outcome = virtual_mic::run(&plan, &options, &stats);
+            let outcome = rustmic_app::virtual_mic::run(&plan, &options, &stats);
             return match outcome {
                 Ok(()) => ExitCode::SUCCESS,
                 Err(error) => {
