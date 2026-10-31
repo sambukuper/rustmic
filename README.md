@@ -122,5 +122,5 @@ docs/ANALYSIS.md         disassembly evidence for every protocol detail
 
 ## License
 
-GPL-3.0. The protocol knowledge comes from analyzing the shipped Windows
+MIT. The protocol knowledge comes from analyzing the shipped Windows
 client for interoperability; no original code was copied.
