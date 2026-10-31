@@ -17,3 +17,6 @@ clap = { version = "4", default-features = false, features = ["std", "help", "us
 opus = "0.3"
 cpal = "0.15"
 ctrlc = "3"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"

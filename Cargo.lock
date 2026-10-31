@@ -2069,6 +2069,7 @@ dependencies = [
  "clap",
  "cpal",
  "ctrlc",
+ "libc",
  "opus",
  "rustmic-core",
  "rustmic-transport",
