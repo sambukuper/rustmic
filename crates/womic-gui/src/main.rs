@@ -7,6 +7,9 @@
 //! connection runs on a worker thread through the same pipeline the
 //! command line client uses.
 
+// A windowed application: no console window on release builds.
+#![cfg_attr(all(target_os = "windows", not(debug_assertions)), windows_subsystem = "windows")]
+
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
@@ -138,10 +141,17 @@ impl WomicApp {
             // The original client starts a connection on the same flag.
             app.start_connection();
         }
-        if std::env::var_os("WOMIC_TEST_OPEN_CONNECT").is_some() {
-            // Test hook: open the Connect dialog right away so a scripted
+        if let Some(which) = std::env::var_os("WOMIC_TEST_OPEN") {
+            // Test hook: open one dialog right away so a scripted
             // screenshot can verify the layout.
-            app.open_connect_dialog();
+            match which.to_string_lossy().as_ref() {
+                "connect" => app.open_connect_dialog(),
+                "ports" => app.dialog = Some(Dialog::Ports),
+                "buffer" => app.dialog = Some(Dialog::Buffer),
+                "stats" => app.dialog = Some(Dialog::Statistics),
+                "about" => app.dialog = Some(Dialog::About),
+                _ => {}
+            }
         }
         app
     }
@@ -578,29 +588,27 @@ impl WomicApp {
     fn statistics_dialog(&mut self, ui: &mut egui::Ui) {
         ui.add_space(6.0);
         let s = self.stats.snapshot();
-        egui::Grid::new("stats_grid").num_columns(2).spacing([16.0, 4.0]).show(ui, |ui| {
-            ui.label("Packets received");
-            ui.label(format!("{}", s.packets_received));
-            ui.label("Packets played");
-            ui.label(format!("{}", s.packets_played));
-            ui.label("Packets dropped");
-            ui.label(format!("{}", s.packets_dropped));
-            ui.label("Packets lost");
-            ui.label(format!("{}", s.packets_lost));
-            ui.label("Decode errors");
-            ui.label(format!("{}", s.decode_errors));
-            ui.label("Bytes received");
-            ui.label(format!("{} KiB", s.bytes_received / 1024));
-            ui.label("Average latency");
-            ui.label(format!("{} ms", s.average_latency.as_millis()));
-            ui.label("Maximum latency");
-            ui.label(format!("{} ms", s.max_latency.as_millis()));
-            ui.label("Reconnects");
-            ui.label(format!("{}", s.reconnects));
-            ui.label("Uptime");
-            ui.label(format!("{} s", s.uptime.as_secs()));
-            ui.end_row();
-        });
+        egui::Grid::new("stats_grid")
+            .num_columns(2)
+            .spacing([24.0, 5.0])
+            .show(ui, |ui| {
+                for (label, value) in [
+                    ("Packets received", format!("{}", s.packets_received)),
+                    ("Packets played", format!("{}", s.packets_played)),
+                    ("Packets dropped", format!("{}", s.packets_dropped)),
+                    ("Packets lost", format!("{}", s.packets_lost)),
+                    ("Decode errors", format!("{}", s.decode_errors)),
+                    ("Bytes received", format!("{} KiB", s.bytes_received / 1024)),
+                    ("Average latency", format!("{} ms", s.average_latency.as_millis())),
+                    ("Maximum latency", format!("{} ms", s.max_latency.as_millis())),
+                    ("Reconnects", format!("{}", s.reconnects)),
+                    ("Uptime", format!("{} s", s.uptime.as_secs())),
+                ] {
+                    ui.label(label);
+                    ui.label(value);
+                    ui.end_row();
+                }
+            });
         ui.add_space(8.0);
         ui.horizontal(|ui| {
             if ui.button("Copy to clipboard").clicked() {

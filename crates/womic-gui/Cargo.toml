@@ -10,6 +10,9 @@ license.workspace = true
 name = "womic-gui"
 path = "src/main.rs"
 
+[build-dependencies]
+winresource = "0.1"
+
 [dependencies]
 womic-core = { workspace = true }
 womic-transport = { workspace = true }

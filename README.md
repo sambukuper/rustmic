@@ -1,4 +1,4 @@
-# rust-mic
+# rustmic
 
 WO Mic client rewritten in Rust. Talks to the WO Mic app on an Android phone
 and plays its microphone stream on the computer, without the original
