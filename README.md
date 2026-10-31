@@ -37,26 +37,26 @@ platforms through the `release` workflow.
 
 Two front ends, same pipeline:
 
-* `womic-gui` opens a window in the spirit of the original client: a
+* `rustmic-gui` opens a window in the spirit of the original client: a
   Connection menu (Connect / Disconnect / Exit), connection fields, an About
   dialog and a status bar that shows the state on the left and the transport
   on the right. It reads and writes the same `settings.dat`, and its
   `Connect when the client starts` option matches the original
   `autoConnect` flag.
-* `womic` is the command line client described below.
+* `rustmic` is the command line client described below.
 
 Start the WO Mic app on the phone, pick a transport and connect:
 
 ```sh
 # Wi-Fi (phone and PC in the same network)
-womic --transport wifi --host 192.168.1.178
+rustmic --transport wifi --host 192.168.1.178
 
 # USB (adb in PATH, or point --adb at it)
-womic --transport usb
+rustmic --transport usb
 
-# Bluetooth (phone must be paired; womic lists paired devices)
-womic --list-bt-devices
-womic --transport bluetooth --bt-address AA:BB:CC:DD:EE:FF
+# Bluetooth (phone must be paired; rustmic lists paired devices)
+rustmic --list-bt-devices
+rustmic --transport bluetooth --bt-address AA:BB:CC:DD:EE:FF
 ```
 
 Values not given on the command line come from a `settings.dat` file next to
@@ -93,10 +93,10 @@ like the original client; only Wi-Fi uses a second channel.
 ## Repository layout
 
 ```text
-crates/womic-core        protocol, framing, settings, jitter buffer, stats
-crates/womic-transport   TCP, UDP, adb and Bluetooth (RFCOMM) transports
-crates/womic-app         the womic binary: CLI, Opus decoder, audio output
-crates/womic-gui         the womic-gui binary: desktop window (egui)
+crates/rustmic-core        protocol, framing, settings, jitter buffer, stats
+crates/rustmic-transport   TCP, UDP, adb and Bluetooth (RFCOMM) transports
+crates/rustmic-app         the womic binary: CLI, Opus decoder, audio output
+crates/rustmic-gui         the rustmic-gui binary: desktop window (egui)
 docs/ANALYSIS.md         disassembly evidence for every protocol detail
 ```
 

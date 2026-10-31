@@ -7,8 +7,8 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::time::Duration;
 
-use womic_core::error::{Error, Result};
-use womic_core::media::{Framing, MediaFrame};
+use rustmic_core::error::{Error, Result};
+use rustmic_core::media::{Framing, MediaFrame};
 
 use crate::MediaChannel;
 
@@ -53,7 +53,7 @@ impl MediaChannel for UdpTransport {
         let mut buffer = vec![0u8; MAX_DATAGRAM];
         let (length, _peer) = self.socket.recv_from(&mut buffer)?;
         buffer.truncate(length);
-        womic_core::media::parse_datagram(&buffer, framing)
+        rustmic_core::media::parse_datagram(&buffer, framing)
     }
 
     fn local_endpoint(&self) -> String {

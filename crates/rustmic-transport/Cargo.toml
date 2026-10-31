@@ -1,5 +1,5 @@
 [package]
-name = "womic-transport"
+name = "rustmic-transport"
 description = "Transport implementations for the WO Mic client"
 version.workspace = true
 edition.workspace = true
@@ -7,7 +7,7 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
-womic-core = { workspace = true }
+rustmic-core = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"

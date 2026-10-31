@@ -34,8 +34,8 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory dist | Out-Null
-          Copy-Item target/release/womic.exe dist/
-          Copy-Item target/release/womic-gui.exe dist/
+          Copy-Item target/release/rustmic.exe dist/
+          Copy-Item target/release/rustmic-gui.exe dist/
           Copy-Item README.md, LICENSE, docs/ANALYSIS.md dist/
           Compress-Archive -Path dist/* -DestinationPath rustmic-${{ github.ref_name }}-windows-x64.zip
 
@@ -43,7 +43,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           mkdir -p dist
-          cp target/release/womic target/release/womic-gui dist/
+          cp target/release/womic target/release/rustmic-gui dist/
           cp README.md LICENSE docs/ANALYSIS.md dist/
           tar -czf rustmic-${{ github.ref_name }}-linux-x64.tar.gz -C dist .
 

@@ -15,15 +15,15 @@
 //! on (`FUN_00404730`). For the Wi-Fi transports the control channel is a
 //! TCP stream and the media channel arrives as UDP datagrams. The framing
 //! of the media channel differs per transport and is announced by the
-//! server, see [`womic_core::media`].
+//! server, see [`rustmic_core::media`].
 
 pub mod adb;
 pub mod bt;
 pub mod tcp;
 pub mod udp;
 
-use womic_core::error::Result;
-use womic_core::media::{Framing, MediaFrame};
+use rustmic_core::error::Result;
+use rustmic_core::media::{Framing, MediaFrame};
 
 pub use adb::AdbTransport;
 pub use bt::{BluetoothTransport, BtSocket};
@@ -56,7 +56,7 @@ pub struct Session {
 
 /// Opens the control and media channels for the given transport.
 pub fn open(
-    transport: womic_core::settings::TransportType,
+    transport: rustmic_core::settings::TransportType,
     host: &str,
     control_port: u16,
     media_port: u16,
@@ -65,16 +65,16 @@ pub fn open(
     adb_path: Option<&str>,
 ) -> Result<Session> {
     match transport {
-        womic_core::settings::TransportType::Wifi | womic_core::settings::TransportType::WifiDirect => {
+        rustmic_core::settings::TransportType::Wifi | rustmic_core::settings::TransportType::WifiDirect => {
             let session = TcpTransport::connect(host, control_port)?;
             let media = UdpTransport::bind(media_port)?;
             Ok(Session { control: Box::new(session), media: Box::new(media) })
         }
-        womic_core::settings::TransportType::Usb => {
+        rustmic_core::settings::TransportType::Usb => {
             let session = AdbTransport::connect(adb_path, control_port)?;
             Ok(Session { control: Box::new(session.control), media: Box::new(session.media) })
         }
-        womic_core::settings::TransportType::Bluetooth => {
+        rustmic_core::settings::TransportType::Bluetooth => {
             let session = BluetoothTransport::connect(bt_address, bt_channel)?;
             let media = session.media_channel()?;
             Ok(Session { control: Box::new(session), media: Box::new(media) })

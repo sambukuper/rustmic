@@ -14,11 +14,11 @@ use std::time::Duration;
 
 use clap::Parser;
 
-use womic_app::session;
-use womic_app::sink;
-use womic_core::error::Error;
-use womic_core::settings::{Settings, TransportType};
-use womic_core::stats::Statistics;
+use rustmic_app::session;
+use rustmic_app::sink;
+use rustmic_core::error::Error;
+use rustmic_core::settings::{Settings, TransportType};
+use rustmic_core::stats::Statistics;
 
 use session::{ConnectionPlan, PipelineOptions};
 use sink::{NullSink, SampleSink, SpeakerSink, StdoutSink};
@@ -26,7 +26,7 @@ use sink::{NullSink, SampleSink, SpeakerSink, StdoutSink};
 /// Connects to a WO Mic server and plays the microphone stream of the
 /// phone on this computer.
 #[derive(Debug, Parser)]
-#[command(name = "womic", version, about)]
+#[command(name = "rustmic", version, about)]
 struct Args {
     /// Transport: wifi, wifi-direct, usb or bluetooth.
     #[arg(long)]
@@ -104,7 +104,7 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
     if args.list_bt_devices {
-        return match womic_transport::BluetoothTransport::paired_devices() {
+        return match rustmic_transport::BluetoothTransport::paired_devices() {
             Ok(devices) => {
                 for device in devices {
                     println!("{:18} {}", device.address, device.name);

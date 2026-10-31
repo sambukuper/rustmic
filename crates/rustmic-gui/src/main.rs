@@ -18,11 +18,11 @@ use std::time::Duration;
 
 use eframe::egui;
 
-use womic_app::session::{self, ConnectionPlan, PipelineOptions};
-use womic_app::sink::{NullSink, SampleSink, SpeakerSink};
-use womic_core::settings::{Settings, TransportType};
-use womic_core::stats::Statistics;
-use womic_transport::bt::BtDeviceInfo;
+use rustmic_app::session::{self, ConnectionPlan, PipelineOptions};
+use rustmic_app::sink::{NullSink, SampleSink, SpeakerSink};
+use rustmic_core::settings::{Settings, TransportType};
+use rustmic_core::stats::Statistics;
+use rustmic_transport::bt::BtDeviceInfo;
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
@@ -34,7 +34,7 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Rust Mic Client",
         options,
-        Box::new(|_cc| Ok(Box::new(WomicApp::new()))),
+        Box::new(|_cc| Ok(Box::new(RustMicApp::new()))),
     )
 }
 
@@ -76,7 +76,7 @@ fn tips(transport: TransportType) -> &'static str {
     }
 }
 
-struct WomicApp {
+struct RustMicApp {
     // connection settings, mirrored into settings.dat
     transport: TransportType,
     host: String,
@@ -94,7 +94,7 @@ struct WomicApp {
     stats: Arc<Statistics>,
     stop: Arc<AtomicBool>,
     disconnecting: bool,
-    result_rx: Option<mpsc::Receiver<womic_core::Result<()>>>,
+    result_rx: Option<mpsc::Receiver<rustmic_core::Result<()>>>,
     worker: Option<JoinHandle<()>>,
 
     // dialog state
@@ -108,11 +108,11 @@ struct WomicApp {
     settings_path: Option<PathBuf>,
 }
 
-impl WomicApp {
-    fn new() -> WomicApp {
+impl RustMicApp {
+    fn new() -> RustMicApp {
         let discovered = Settings::discover(exe_directory().as_deref());
         let settings = discovered.as_ref().map(|(_, s)| s.clone()).unwrap_or_default();
-        let mut app = WomicApp {
+        let mut app = RustMicApp {
             transport: settings.transport_type,
             host: settings.wifi_server_addr.clone(),
             soft_ap: settings.soft_ap_addr.clone(),
@@ -141,7 +141,7 @@ impl WomicApp {
             // The original client starts a connection on the same flag.
             app.start_connection();
         }
-        if let Some(which) = std::env::var_os("WOMIC_TEST_OPEN") {
+        if let Some(which) = std::env::var_os("RUSTMIC_TEST_OPEN") {
             // Test hook: open one dialog right away so a scripted
             // screenshot can verify the layout.
             match which.to_string_lossy().as_ref() {
@@ -166,7 +166,7 @@ impl WomicApp {
             media_port: self.media_port,
             buffer_size: self.buffer_size,
             auto_connect: self.auto_connect,
-            window: womic_core::settings::WindowState::default(),
+            window: rustmic_core::settings::WindowState::default(),
             bt_address: self.bt_address.clone(),
         }
     }
@@ -282,7 +282,7 @@ impl WomicApp {
     /// Loads the paired device list for the Bluetooth drop box, the way the
     /// original dialog fills its combo when the transport is selected.
     fn load_bt_devices(&mut self) {
-        self.bt_devices = womic_transport::BluetoothTransport::paired_devices().unwrap_or_default();
+        self.bt_devices = rustmic_transport::BluetoothTransport::paired_devices().unwrap_or_default();
     }
 
     /// Opens a dialog with the values the connection would use right now.
@@ -298,7 +298,7 @@ impl WomicApp {
     }
 }
 
-impl eframe::App for WomicApp {
+impl eframe::App for RustMicApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_worker();
         ctx.request_repaint_after(Duration::from_millis(250));
@@ -440,7 +440,7 @@ fn dialog_frame(
     close
 }
 
-impl WomicApp {
+impl RustMicApp {
     /// The Connect dialog: transport radios stacked in the left group, per
     /// transport details and the original tips in the right group, OK and
     /// Cancel centered at the bottom, like the original dialog.

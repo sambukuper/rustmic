@@ -13,12 +13,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use womic_core::error::{Error, Result};
-use womic_core::jitter::JitterBuffer;
-use womic_core::media::Framing;
-use womic_core::protocol::ControlClient;
-use womic_core::settings::TransportType;
-use womic_core::stats::Statistics;
+use rustmic_core::error::{Error, Result};
+use rustmic_core::jitter::JitterBuffer;
+use rustmic_core::media::Framing;
+use rustmic_core::protocol::ControlClient;
+use rustmic_core::settings::TransportType;
+use rustmic_core::stats::Statistics;
 
 use crate::codec::{VoiceDecoder, FRAME_SAMPLES};
 use crate::sink::SampleSink;
@@ -97,7 +97,7 @@ fn stream(
     sink: &mut dyn SampleSink,
     stats: &Statistics,
 ) -> Result<()> {
-    let mut session = womic_transport::open(
+    let mut session = rustmic_transport::open(
         plan.transport,
         &plan.host,
         plan.control_port,
@@ -121,7 +121,7 @@ fn stream(
 /// Public so the integration tests can drive an opened session against a
 /// mock server.
 pub fn pump(
-    session: &mut womic_transport::Session,
+    session: &mut rustmic_transport::Session,
     framing: Framing,
     options: &PipelineOptions,
     sink: &mut dyn SampleSink,

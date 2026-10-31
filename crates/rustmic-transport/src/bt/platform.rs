@@ -17,7 +17,7 @@ mod imp {
     use std::io;
     use std::sync::Once;
 
-    use womic_core::error::{Error, Result};
+    use rustmic_core::error::{Error, Result};
 
     use windows_sys::Win32::Foundation::{DuplicateHandle, DUPLICATE_SAME_ACCESS, HANDLE};
     use windows_sys::Win32::Networking::WinSock::{
@@ -308,7 +308,7 @@ mod imp {
     //! list comes from `bluetoothctl`, which every BlueZ install ships.
     use std::io;
 
-    use womic_core::error::{Error, Result};
+    use rustmic_core::error::{Error, Result};
 
     /// `AF_BLUETOOTH`, from `bluetooth.h`.
     const AF_BLUETOOTH: libc::c_int = 31;

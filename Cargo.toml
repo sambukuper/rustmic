@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/womic-core",
-    "crates/womic-transport",
-    "crates/womic-app",
-    "crates/womic-gui",
+    "crates/rustmic-core",
+    "crates/rustmic-transport",
+    "crates/rustmic-app",
+    "crates/rustmic-gui",
 ]
 
 [workspace.package]
@@ -15,9 +15,9 @@ license = "GPL-3.0-only"
 repository = "https://github.com/sambukuper/rustmic"
 
 [workspace.dependencies]
-womic-core = { path = "crates/womic-core" }
-womic-transport = { path = "crates/womic-transport" }
-womic-app = { path = "crates/womic-app" }
+rustmic-core = { path = "crates/rustmic-core" }
+rustmic-transport = { path = "crates/rustmic-transport" }
+rustmic-app = { path = "crates/rustmic-app" }
 
 [profile.release]
 opt-level = 3

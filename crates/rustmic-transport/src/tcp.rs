@@ -5,8 +5,8 @@
 use std::net::{Shutdown, SocketAddr, TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
-use womic_core::error::{Error, Result};
-use womic_core::media::{Framing, MediaFrame};
+use rustmic_core::error::{Error, Result};
+use rustmic_core::media::{Framing, MediaFrame};
 
 use crate::MediaChannel;
 
@@ -60,7 +60,7 @@ impl TcpMedia {
 
 impl MediaChannel for TcpMedia {
     fn read_frame(&mut self, framing: Framing) -> Result<MediaFrame> {
-        womic_core::media::read_frame(&mut self.stream, framing)
+        rustmic_core::media::read_frame(&mut self.stream, framing)
     }
 
     fn local_endpoint(&self) -> String {

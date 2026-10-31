@@ -1,5 +1,5 @@
 [package]
-name = "womic-core"
+name = "rustmic-core"
 description = "Protocol, framing, settings and jitter-buffer logic of the WO Mic client"
 version.workspace = true
 edition.workspace = true

@@ -16,7 +16,7 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use womic_core::error::{Error, Result};
+use rustmic_core::error::{Error, Result};
 
 use crate::tcp::{TcpMedia, TcpTransport};
 
@@ -66,7 +66,7 @@ impl Adb {
             return Err(Error::Config(format!("{} is not an adb executable", path.display())));
         }
 
-        if let Ok(path) = std::env::var("WOMIC_ADB") {
+        if let Ok(path) = std::env::var("RUSTMIC_ADB") {
             let path = PathBuf::from(path);
             if path.is_file() {
                 return Ok(Adb { program: path });
@@ -93,7 +93,7 @@ impl Adb {
         }
 
         Err(Error::Config(
-            "adb was not found; put it in the path or point WOMIC_ADB at it".to_string(),
+            "adb was not found; put it in the path or point RUSTMIC_ADB at it".to_string(),
         ))
     }
 

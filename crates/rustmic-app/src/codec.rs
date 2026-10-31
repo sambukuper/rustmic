@@ -8,10 +8,10 @@
 //! `+0x4c`). The wrapper below keeps the same shape: one frame in, one
 //! 1920 byte PCM frame out.
 
-use womic_core::error::{Error, Result};
+use rustmic_core::error::{Error, Result};
 
 /// One decoded 20 ms frame, 48 kHz mono signed 16 bit.
-pub const FRAME_SAMPLES: usize = womic_core::FRAME_SAMPLES;
+pub const FRAME_SAMPLES: usize = rustmic_core::FRAME_SAMPLES;
 
 /// Decodes Opus packets into PCM frames.
 pub struct VoiceDecoder {
@@ -21,7 +21,7 @@ pub struct VoiceDecoder {
 impl VoiceDecoder {
     /// Creates the decoder with the format of the WO Mic server stream.
     pub fn new() -> Result<VoiceDecoder> {
-        let decoder = opus::Decoder::new(womic_core::SAMPLE_RATE, opus::Channels::Mono)
+        let decoder = opus::Decoder::new(rustmic_core::SAMPLE_RATE, opus::Channels::Mono)
             .map_err(|_| Error::MediaOpen)?;
         Ok(VoiceDecoder { decoder })
     }
@@ -42,7 +42,7 @@ mod tests {
     use super::*;
 
     fn encoder() -> opus::Encoder {
-        opus::Encoder::new(womic_core::SAMPLE_RATE, opus::Channels::Mono, opus::Application::Voip)
+        opus::Encoder::new(rustmic_core::SAMPLE_RATE, opus::Channels::Mono, opus::Application::Voip)
             .unwrap()
     }
 

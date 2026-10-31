@@ -2063,6 +2063,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustmic-app"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "cpal",
+ "ctrlc",
+ "opus",
+ "rustmic-core",
+ "rustmic-transport",
+]
+
+[[package]]
+name = "rustmic-core"
+version = "0.1.0"
+
+[[package]]
+name = "rustmic-gui"
+version = "0.1.0"
+dependencies = [
+ "eframe",
+ "rustmic-app",
+ "rustmic-core",
+ "rustmic-transport",
+ "winresource",
+]
+
+[[package]]
+name = "rustmic-transport"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "rustmic-core",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "rustversion"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3032,42 +3068,6 @@ name = "wit-bindgen"
 version = "0.57.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
-
-[[package]]
-name = "womic-app"
-version = "0.1.0"
-dependencies = [
- "clap",
- "cpal",
- "ctrlc",
- "opus",
- "womic-core",
- "womic-transport",
-]
-
-[[package]]
-name = "womic-core"
-version = "0.1.0"
-
-[[package]]
-name = "womic-gui"
-version = "0.1.0"
-dependencies = [
- "eframe",
- "winresource",
- "womic-app",
- "womic-core",
- "womic-transport",
-]
-
-[[package]]
-name = "womic-transport"
-version = "0.1.0"
-dependencies = [
- "libc",
- "windows-sys 0.61.2",
- "womic-core",
-]
 
 [[package]]
 name = "writeable"

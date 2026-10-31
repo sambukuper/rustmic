@@ -22,8 +22,8 @@
 
 use std::io::{Read, Write};
 
-use womic_core::error::{Error, Result};
-use womic_core::media::{Framing, MediaFrame};
+use rustmic_core::error::{Error, Result};
+use rustmic_core::media::{Framing, MediaFrame};
 
 use crate::MediaChannel;
 
@@ -147,7 +147,7 @@ pub struct MediaHalf {
 
 impl MediaChannel for MediaHalf {
     fn read_frame(&mut self, framing: Framing) -> Result<MediaFrame> {
-        womic_core::media::read_frame(&mut self.socket, framing)
+        rustmic_core::media::read_frame(&mut self.socket, framing)
     }
 }
 

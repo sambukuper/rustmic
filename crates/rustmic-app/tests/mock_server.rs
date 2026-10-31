@@ -11,13 +11,13 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use opus::Encoder;
-use womic_app::session::{PipelineOptions, pump};
-use womic_app::sink::SampleSink;
-use womic_core::media::Framing;
-use womic_core::protocol::ControlClient;
-use womic_core::settings::TransportType;
-use womic_core::stats::Statistics;
-use womic_transport::Session;
+use rustmic_app::session::{PipelineOptions, pump};
+use rustmic_app::sink::SampleSink;
+use rustmic_core::media::Framing;
+use rustmic_core::protocol::ControlClient;
+use rustmic_core::settings::TransportType;
+use rustmic_core::stats::Statistics;
+use rustmic_transport::Session;
 
 const FRAME_SAMPLES: usize = 960;
 
@@ -29,7 +29,7 @@ struct CollectSink {
 }
 
 impl SampleSink for CollectSink {
-    fn write(&mut self, samples: &[i16]) -> womic_core::error::Result<()> {
+    fn write(&mut self, samples: &[i16]) -> rustmic_core::error::Result<()> {
         self.frames += 1;
         self.samples.extend_from_slice(samples);
         Ok(())
@@ -105,7 +105,7 @@ fn the_client_pipeline_survives_a_full_server_round_trip() {
 
     // Bind the client's media socket first: datagrams sent before the bind
     // would be answered with ICMP port unreachable and silently dropped.
-    let mut session = womic_transport::open(
+    let mut session = rustmic_transport::open(
         TransportType::Wifi,
         "127.0.0.1",
         control_port,

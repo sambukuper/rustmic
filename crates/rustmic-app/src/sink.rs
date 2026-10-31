@@ -12,7 +12,7 @@ use std::sync::mpsc::{self, Receiver, SyncSender, TryRecvError};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
-use womic_core::error::{Error, Result};
+use rustmic_core::error::{Error, Result};
 
 use crate::codec::FRAME_SAMPLES;
 
@@ -164,7 +164,7 @@ fn build_stream(
         sample_rate: cpal::SampleRate(device_rate),
         buffer_size: cpal::BufferSize::Default,
     };
-    let step = womic_core::SAMPLE_RATE as f64 / device_rate as f64;
+    let step = rustmic_core::SAMPLE_RATE as f64 / device_rate as f64;
 
     let stream = device
         .build_output_stream(
